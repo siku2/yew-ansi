@@ -3,7 +3,7 @@ use crate::graphic_rendition::ColorEffect;
 /// Combination of classes and inline styles.
 ///
 /// While it is possible to use inline styles only, it is not doable
-/// with just classes do the amount of RGB colour values.
+/// with just classes due to the amount of RGB colour values.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ClassStyle {
     pub class: Option<String>,
@@ -13,9 +13,10 @@ impl ClassStyle {
     /// Push a new class to the classes.
     /// This function doesn't validate the given string in any way.
     pub fn push_class(&mut self, new: impl AsRef<str>) {
+        const DELIMITER: char = ' ';
         let class = self.style.get_or_insert_with(String::new);
-        if !class.is_empty() {
-            class.push(' ');
+        if !class.is_empty() && !class.ends_with(DELIMITER) {
+            class.push(DELIMITER);
         }
         class.push_str(new.as_ref());
     }
@@ -24,7 +25,6 @@ impl ClassStyle {
     /// This function doesn't validate the given string in any way.
     pub fn push_style(&mut self, new: impl AsRef<str>) {
         const DELIMITER: char = ';';
-
         let style = self.style.get_or_insert_with(String::new);
         if !style.is_empty() && !style.ends_with(DELIMITER) {
             style.push(DELIMITER);
@@ -33,6 +33,7 @@ impl ClassStyle {
     }
 }
 
+/// Builder for [`ClassStyle`].
 pub trait StyleBuilder: Default {
     /// Finish building and create a `ClassStyle`.
     fn finish(self) -> ClassStyle;

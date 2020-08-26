@@ -99,6 +99,19 @@ impl Csi {
 /// Returns the content before the escape sequence, the escape sequence itself, and everything following it.
 /// The escape sequence can be `None` if it's invalid.
 /// If the slice doesn't contain an escape sequence the entire string slice will be returned as the first item.
+///
+/// ```
+/// # use yew_ansi::*;
+/// let (pre, esc, post) = yew_ansi::read_next_sequence("Hello \u{001b}[32mWorld");
+/// assert_eq!(pre, "Hello ");
+/// assert_eq!(
+///     esc,
+///     Some(Escape::Csi(Csi::Sgr(vec![
+///         Sgr::ColorFgName(ColorName::Green),
+///     ])))
+/// );
+/// assert_eq!(post, "World");
+/// ```
 pub fn read_next_sequence(s: &str) -> (&str, Option<Escape>, &str) {
     if let Some(index) = s.find(Escape::ESC) {
         let (pre, post) = s.split_at(index);
@@ -121,7 +134,28 @@ pub enum Marker<'a> {
     Sequence(Escape),
 }
 
+
 /// Get all markers for the given string.
+///
+/// ```
+/// # use yew_ansi::*;
+/// let markers = yew_ansi::get_markers("Hello \u{001b}[32mWorld\u{001b}[39;1m!");
+/// assert_eq!(
+///     markers,
+///     vec![
+///         Marker::Text("Hello "),
+///         Marker::Sequence(Escape::Csi(Csi::Sgr(vec![
+///             Sgr::ColorFgName(ColorName::Green),
+///         ]))),
+///         Marker::Text("World"),
+///         Marker::Sequence(Escape::Csi(Csi::Sgr(vec![
+///             Sgr::ResetColorFg,
+///             Sgr::Bold,
+///         ]))),
+///         Marker::Text("!"),
+///     ]
+/// );
+/// ```
 pub fn get_markers(mut s: &str) -> Vec<Marker> {
     let mut markers = Vec::new();
     while !s.is_empty() {

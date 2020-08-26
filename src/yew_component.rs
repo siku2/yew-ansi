@@ -8,11 +8,15 @@ use yew::{html, Classes, Component, ComponentLink, Html, Properties, ShouldRende
 
 const CSS_ANSI_CONTAINER: &str = "font-family:monospace;";
 
+/// Props that can be passed to the [`Ansi`] component.
 #[derive(Clone, Debug, PartialEq, Properties)]
 pub struct AnsiProps {
+    /// Classes to add to the root element. (Optional)
     #[prop_or_default]
     pub class: Classes,
+    /// Content to render. (Required)
     pub text: String,
+    /// Whether to disable the inline style applied to the root component. (Optional)
     #[prop_or_default]
     pub no_default_style: bool,
 }
@@ -21,6 +25,8 @@ pub struct AnsiProps {
 ///
 /// By default the component uses [`InlineStyle`] to build the style for each part.
 /// You can pass your own [`StyleBuilder`] like `Ansi<MyBuilder>`.
+///
+/// See [`AnsiProps`] for the props that can be passed to this component.
 #[derive(Debug)]
 pub struct Ansi<B: StyleBuilder = InlineStyle> {
     props: AnsiProps,
