@@ -80,6 +80,7 @@ impl Display for ColorName {
 
 /// Select Graphic Rendition parameter.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum Sgr {
     Reset,
     Bold,
@@ -163,7 +164,7 @@ impl Sgr {
 
     /// Parse a single SGR parameter from the parameters.
     /// This will only consume as many items from `params` as required to complete the SGR.
-    pub fn from_params(mut params: impl Iterator<Item = usize>) -> Option<Self> {
+    fn from_params(mut params: impl Iterator<Item = usize>) -> Option<Self> {
         use Sgr::*;
         let code = params.next()?;
         Some(match code {
@@ -189,7 +190,7 @@ impl Sgr {
 
 /// Parse all SGR parameters in the given parameters.
 /// This only consumes as many items from `params` as can be parsed by [`Sgr`].
-pub fn parse_sgrs(mut params: impl Iterator<Item = usize>) -> Vec<Sgr> {
+pub(crate) fn parse_sgrs(mut params: impl Iterator<Item = usize>) -> Vec<Sgr> {
     iter::from_fn(|| Sgr::from_params(&mut params)).collect()
 }
 
@@ -225,7 +226,9 @@ pub struct SgrEffect {
     pub bold: bool,
     pub italic: bool,
     pub underline: bool,
+    /// Foreground colour
     pub fg: ColorEffect,
+    /// Background colour
     pub bg: ColorEffect,
 }
 impl SgrEffect {

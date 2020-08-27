@@ -10,6 +10,7 @@ fn cursor_skip_space(cursor: &mut CharCursor) {
 
 /// ANSI Escape Sequence.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum Escape {
     Csi(Csi),
 }
@@ -29,6 +30,7 @@ impl Escape {
 
 /// Control sequence.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum Csi {
     Sgr(Vec<Sgr>),
 }
@@ -134,12 +136,61 @@ pub enum Marker<'a> {
     Sequence(Escape),
 }
 
+/// Iterator yielding markers in a string.
+///
+/// Returned by [`get_markers`].
+#[derive(Clone, Debug)]
+pub struct MarkerIter<'a> {
+    remaining: &'a str,
+    buf: Option<Marker<'a>>,
+}
+impl<'a> MarkerIter<'a> {
+    fn new(s: &'a str) -> Self {
+        Self {
+            remaining: s,
+            buf: None,
+        }
+    }
+}
+impl<'a> Iterator for MarkerIter<'a> {
+    type Item = Marker<'a>;
 
-/// Get all markers for the given string.
+    fn next(&mut self) -> Option<Self::Item> {
+        // handle the marker that might have been buffered by last iteration
+        if let Some(marker) = self.buf.take() {
+            return Some(marker);
+        }
+
+        while !self.remaining.is_empty() {
+            let (pre, esc, post) = read_next_sequence(&self.remaining);
+            self.remaining = post;
+
+            let esc_marker = esc.map(Marker::Sequence);
+
+            if pre.is_empty() {
+                if let Some(marker) = esc_marker {
+                    return Some(marker);
+                }
+
+                // nothing to yield right now, this either means we're at the end or we just skipped over an invalid escape sequence.
+                // explicit "continue" here to make it clear.
+                continue;
+            } else {
+                // store the escape code for the next iteration
+                self.buf = esc_marker;
+                return Some(Marker::Text(pre));
+            }
+        }
+
+        None
+    }
+}
+
+/// Iterate over all markers for the given string.
 ///
 /// ```
 /// # use yew_ansi::*;
-/// let markers = yew_ansi::get_markers("Hello \u{001b}[32mWorld\u{001b}[39;1m!");
+/// let markers = yew_ansi::get_markers("Hello \u{001b}[32mWorld\u{001b}[39;1m!").collect::<Vec<_>>();
 /// assert_eq!(
 ///     markers,
 ///     vec![
@@ -156,21 +207,8 @@ pub enum Marker<'a> {
 ///     ]
 /// );
 /// ```
-pub fn get_markers(mut s: &str) -> Vec<Marker> {
-    let mut markers = Vec::new();
-    while !s.is_empty() {
-        let (pre, esc, post) = read_next_sequence(s);
-        s = post;
-
-        if !pre.is_empty() {
-            markers.push(Marker::Text(pre));
-        }
-        if let Some(seq) = esc {
-            markers.push(Marker::Sequence(seq));
-        }
-    }
-
-    markers
+pub fn get_markers(s: &str) -> MarkerIter {
+    MarkerIter::new(s)
 }
 
 #[cfg(test)]
@@ -204,7 +242,7 @@ mod tests {
 
     #[test]
     fn marking() {
-        let markers = get_markers("Hello \u{001b} [33mWorld");
+        let markers = get_markers("Hello \u{001b} [33mWorld").collect::<Vec<_>>();
         assert_eq!(
             markers,
             vec![

@@ -1,8 +1,4 @@
-use crate::{
-    graphic_rendition::SgrEffect,
-    sequences::{self, Csi, Escape, Marker},
-    style::{ClassStyle, InlineStyle, StyleBuilder},
-};
+use crate::style::{ClassStyle, InlineStyle, StyleBuilder};
 use std::marker::PhantomData;
 use yew::{html, Classes, Component, ComponentLink, Html, Properties, ShouldRender};
 
@@ -30,27 +26,28 @@ pub struct AnsiProps {
 #[derive(Debug)]
 pub struct Ansi<B: StyleBuilder = InlineStyle> {
     props: AnsiProps,
-    parts: Vec<Part>,
+    segments: Vec<(ClassStyle, String)>,
     _builder: PhantomData<B>,
 }
 impl<B: StyleBuilder> Ansi<B> {
-    fn update_parts(&mut self) {
+    fn update_segments(&mut self) {
         let s = &self.props.text;
-        self.parts.clear();
-        let mut effect = SgrEffect::default();
-        for marker in sequences::get_markers(s) {
-            match marker {
-                Marker::Text(content) => {
-                    let part = Part {
-                        content: content.to_owned(),
-                        style: effect.to_class_style::<B>(),
-                    };
-                    self.parts.push(part);
-                }
-                Marker::Sequence(Escape::Csi(Csi::Sgr(sgrs))) => {
-                    effect.apply_sgrs(sgrs);
-                }
-            }
+        self.segments.clear();
+
+        for (effect, content) in crate::get_sgr_segments(s) {
+            self.segments
+                .push((effect.to_class_style::<B>(), content.to_owned()))
+        }
+    }
+
+    fn render_segment((class_style, content): &(ClassStyle, String)) -> Html {
+        // TODO update to use optional attributes when they land
+        let class = class_style.class.clone().unwrap_or_default();
+        let style = class_style.style.clone().unwrap_or_default();
+        html! {
+            <span class=class style=style>
+                { content }
+            </span>
         }
     }
 }
@@ -61,10 +58,10 @@ impl<B: StyleBuilder + 'static> Component for Ansi<B> {
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         let mut instance = Self {
             props,
-            parts: Vec::new(),
+            segments: Vec::new(),
             _builder: PhantomData::default(),
         };
-        instance.update_parts();
+        instance.update_segments();
         instance
     }
 
@@ -73,7 +70,7 @@ impl<B: StyleBuilder + 'static> Component for Ansi<B> {
     }
 
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
-        let update_parts = self.props.text != props.text;
+        let update_segments = self.props.text != props.text;
 
         let should_render = if self.props != props {
             self.props = props;
@@ -82,8 +79,8 @@ impl<B: StyleBuilder + 'static> Component for Ansi<B> {
             false
         };
 
-        if update_parts {
-            self.update_parts();
+        if update_segments {
+            self.update_segments();
         }
 
         should_render
@@ -98,31 +95,8 @@ impl<B: StyleBuilder + 'static> Component for Ansi<B> {
         };
         html! {
             <pre class=props.class.clone() style=style>
-                { for self.parts.iter().map(Part::render) }
+                { for self.segments.iter().map(Self::render_segment) }
             </pre>
-        }
-    }
-}
-
-#[derive(Clone, Debug, PartialEq, Properties)]
-struct Part {
-    content: String,
-    style: ClassStyle,
-}
-impl Part {
-    fn render(&self) -> Html {
-        let Self {
-            content,
-            style: ClassStyle { class, style },
-        } = self;
-
-        // TODO update to use optional attributes when they land
-        let class = class.clone().unwrap_or_default();
-        let style = style.clone().unwrap_or_default();
-        html! {
-            <span class=class style=style>
-                { content }
-            </span>
         }
     }
 }
