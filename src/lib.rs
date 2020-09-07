@@ -50,6 +50,8 @@ mod yew_component;
 /// Each item is a tuple containing the [`SgrEffect`] and the [`&str`][str] it applies to.
 ///
 /// Returned by [`get_sgr_segments`].
+#[must_use = "iterators are lazy and do nothing unless consumed"]
+#[derive(Clone, Debug)]
 pub struct SgrSegmentIter<'a> {
     markers: MarkerIter<'a>,
     effect: SgrEffect,

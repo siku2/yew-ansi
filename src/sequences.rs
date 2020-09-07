@@ -115,16 +115,14 @@ impl Csi {
 /// assert_eq!(post, "World");
 /// ```
 pub fn read_next_sequence(s: &str) -> (&str, Option<Escape>, &str) {
-    if let Some(index) = s.find(Escape::ESC) {
+    s.find(Escape::ESC).map_or((s, None, ""), |index| {
         let (pre, post) = s.split_at(index);
 
         let mut cursor = CharCursor::new(post);
         let esc = Escape::parse(&mut cursor);
 
         (pre, esc, cursor.remainder())
-    } else {
-        (s, None, "")
-    }
+    })
 }
 
 /// Parts of a string containing ANSI escape sequences.
@@ -141,6 +139,7 @@ pub enum Marker<'a> {
 /// Each item is a [`Marker`].
 ///
 /// Returned by [`get_markers`].
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 #[derive(Clone, Debug)]
 pub struct MarkerIter<'a> {
     remaining: &'a str,

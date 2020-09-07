@@ -90,11 +90,11 @@ where
     fn change(&mut self, props: Self::Properties) -> ShouldRender {
         let update_segments = self.props.text != props.text;
 
-        let should_render = if self.props != props {
+        let should_render = if self.props == props {
+            false
+        } else {
             self.props = props;
             true
-        } else {
-            false
         };
 
         if update_segments {
