@@ -1,17 +1,17 @@
 use crate::style::{ClassStyle, InlineStyle, StyleBuilder};
-use std::marker::PhantomData;
+use std::{borrow::Borrow, marker::PhantomData, rc::Rc};
 use yew::{html, Classes, Component, ComponentLink, Html, Properties, ShouldRender};
 
 const CSS_ANSI_CONTAINER: &str = "font-family:monospace;";
 
-/// Props that can be passed to the [`Ansi`] component.
+/// Props that can be passed to the [`AnsiRenderer`] component.
 #[derive(Clone, Debug, PartialEq, Properties)]
-pub struct AnsiProps {
+pub struct AnsiProps<S: Clone> {
     /// Classes to add to the root element. (Optional)
     #[prop_or_default]
     pub class: Classes,
     /// Content to render. (Required)
-    pub text: String,
+    pub text: S,
     /// Whether to disable the inline style applied to the root component. (Optional)
     #[prop_or_default]
     pub no_default_style: bool,
@@ -19,30 +19,44 @@ pub struct AnsiProps {
 
 /// Component for rendering text containing ANSI escape codes.
 ///
-/// By default the component uses [`InlineStyle`] to build the style for each part.
-/// You can pass your own [`StyleBuilder`] like `Ansi<MyBuilder>`.
+/// This takes two type arguments, `Text` and `Builder`.
+/// `Text` is the type that is passed to [`AnsiProps::text`]. It can be any type that implements [`Borrow<str>`][Borrow].
+/// `Builder` specifies the [`StyleBuilder`]. You probably want to use [`InlineStyle`].
+///
+/// Unless you have special requirements you should use one of the helper types instead of this:
+/// - [`Ansi`]
+/// - [`AnsiRc`]
+/// - [`AnsiStatic`]
 ///
 /// See [`AnsiProps`] for the props that can be passed to this component.
 #[derive(Debug)]
-pub struct Ansi<B: StyleBuilder = InlineStyle> {
-    props: AnsiProps,
+pub struct AnsiRenderer<Text, Builder>
+where
+    Text: Clone,
+    Builder: StyleBuilder,
+{
+    props: AnsiProps<Text>,
     segments: Vec<(ClassStyle, String)>,
-    _builder: PhantomData<B>,
+    _builder: PhantomData<Builder>,
 }
-impl<B: StyleBuilder> Ansi<B> {
+impl<Text, Builder> AnsiRenderer<Text, Builder>
+where
+    Text: Borrow<str> + Clone,
+    Builder: StyleBuilder,
+{
     fn update_segments(&mut self) {
         let s = &self.props.text;
         self.segments.clear();
 
-        for (effect, content) in crate::get_sgr_segments(s) {
+        for (effect, content) in crate::get_sgr_segments(s.borrow()) {
             self.segments
-                .push((effect.to_class_style::<B>(), content.to_owned()))
+                .push((effect.to_class_style::<Builder>(), content.to_owned()))
         }
     }
 
     fn render_segment((class_style, content): &(ClassStyle, String)) -> Html {
         // TODO update to use optional attributes when they land
-        let class = class_style.class.clone().unwrap_or_default();
+        let class = class_style.class.clone();
         let style = class_style.style.clone().unwrap_or_default();
         html! {
             <span class=class style=style>
@@ -51,9 +65,13 @@ impl<B: StyleBuilder> Ansi<B> {
         }
     }
 }
-impl<B: StyleBuilder + 'static> Component for Ansi<B> {
+impl<Text, Builder> Component for AnsiRenderer<Text, Builder>
+where
+    Text: Borrow<str> + Clone + PartialEq + 'static,
+    Builder: StyleBuilder + 'static,
+{
     type Message = ();
-    type Properties = AnsiProps;
+    type Properties = AnsiProps<Text>;
 
     fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
         let mut instance = Self {
@@ -100,3 +118,16 @@ impl<B: StyleBuilder + 'static> Component for Ansi<B> {
         }
     }
 }
+
+/// ANSI component which takes a [`String`].
+///
+/// See [`AnsiRenderer`] for more details.
+pub type Ansi<Builder = InlineStyle> = AnsiRenderer<String, Builder>;
+/// ANSI component which takes a [`Rc<String>`][Rc].
+///
+/// See [`AnsiRenderer`] for more details.
+pub type AnsiRc<Builder = InlineStyle> = AnsiRenderer<Rc<String>, Builder>;
+/// ANSI component which takes a [`&'static str`][str].
+///
+/// See [`AnsiRenderer`] for more details.
+pub type AnsiStatic<Builder = InlineStyle> = AnsiRenderer<&'static str, Builder>;

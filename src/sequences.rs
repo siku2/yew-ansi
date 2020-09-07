@@ -138,6 +138,8 @@ pub enum Marker<'a> {
 
 /// Iterator yielding markers in a string.
 ///
+/// Each item is a [`Marker`].
+///
 /// Returned by [`get_markers`].
 #[derive(Clone, Debug)]
 pub struct MarkerIter<'a> {
@@ -186,7 +188,7 @@ impl<'a> Iterator for MarkerIter<'a> {
     }
 }
 
-/// Iterate over all markers for the given string.
+/// Iterate over all [`Marker`]s in given string.
 ///
 /// ```
 /// # use yew_ansi::*;

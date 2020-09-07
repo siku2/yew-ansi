@@ -25,7 +25,7 @@ impl<'a> CharCursor<'a> {
         self.s.get(i)
     }
 
-    /// Get a string slice containing all the  
+    /// Get a string slice containing all the characters following the current position.
     pub fn remainder(&self) -> &'a str {
         // SAFETY: pos always points to a char boundary
         unsafe { self.s.get_unchecked(self.pos..) }
@@ -36,6 +36,7 @@ impl<'a> CharCursor<'a> {
     }
 
     /// Check if the next character matches the expected one.
+    /// This doesn't advance the cursor's position.
     pub fn peek_char(&self, expected: char) -> bool {
         self.peek() == Some(expected)
     }

@@ -4,9 +4,9 @@
 //!
 //! ```
 //! # use yew::html;
-//! # use yew_ansi::Ansi;
+//! # use yew_ansi::AnsiStatic;
 //! html! {
-//!     <Ansi text="Hello \u{001b}[32mWorld\u{001b}[39;1m!" />
+//!     <AnsiStatic text="Hello \u{001b}[32mWorld\u{001b}[39;1m!" />
 //! }
 //! # ;
 //! ```
@@ -21,7 +21,14 @@
 //! </pre>
 //! ```
 //!
-//! Refer to [`Ansi`] and [`AnsiProps`] for more information about the component.
+//! Refer to [`AnsiRenderer`] and [`AnsiProps`] for more details.
+//!
+//! # Parsing
+//!
+//! If you want to parse text containing ANSI escape codes you can use [`get_sgr_segments`]
+//! to iterate over text segments along with their [`SgrEffect`].
+//!
+//! If you need more control, use [`get_markers`] to iterate over the raw [`Escape`] codes in the text.
 
 pub use cursor::CharCursor;
 pub use graphic_rendition::*;
@@ -39,6 +46,8 @@ mod style;
 mod yew_component;
 
 /// Iterator over the SGR segments in a string slice.
+///
+/// Each item is a tuple containing the [`SgrEffect`] and the [`&str`][str] it applies to.
 ///
 /// Returned by [`get_sgr_segments`].
 pub struct SgrSegmentIter<'a> {
