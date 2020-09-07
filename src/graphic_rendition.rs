@@ -202,6 +202,17 @@ pub enum ColorEffect {
     NameBright(ColorName),
     Rgb(u32),
 }
+impl ColorEffect {
+    /// Get the 24-bit colour code.
+    pub fn rgb(&self) -> Option<u32> {
+        match self {
+            Self::None => None,
+            Self::Name(named) => Some(named.rgb(false)),
+            Self::NameBright(named) => Some(named.rgb(true)),
+            Self::Rgb(rgb) => Some(*rgb),
+        }
+    }
+}
 impl Default for ColorEffect {
     fn default() -> Self {
         Self::None
