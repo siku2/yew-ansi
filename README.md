@@ -1,5 +1,8 @@
 # Yew ANSI
 
+[![Crate Info](https://img.shields.io/crates/v/yew-ansi.svg)][crate-info]
+[![API Documentation](https://docs.rs/yew-ansi/badge.svg)][api-documentation]
+
 ANSI escape code rendering for the web.
 
 Currently this library only covers SGR parameters (i.e. the character appearance part).
@@ -21,3 +24,6 @@ Supported SGR parameters:
 ## Examples
 
 See the [examples](examples) directory.
+
+[crate-info]: https://crates.io/crates/yew-ansi
+[api-documentation]: https://docs.rs/yew-ansi
