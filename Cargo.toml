@@ -16,3 +16,10 @@ default = ["yew"]
 
 [dependencies]
 yew = { version = "0.17", optional = true }
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "marking"
+harness = false
