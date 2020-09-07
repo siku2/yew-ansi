@@ -1,8 +1,7 @@
-use wasm_bindgen::prelude::*;
 use yew::{html, Component, ComponentLink, Html, ShouldRender};
-use yew_ansi::Ansi;
+use yew_ansi::AnsiStatic;
 
-const OUTPUT: &str = include_str!("output.txt");
+const OUTPUT: &str = include_str!("../../../assets/cargo-expand.txt");
 
 pub struct Model;
 impl Component for Model {
@@ -10,10 +9,10 @@ impl Component for Model {
     type Properties = ();
 
     fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
-        Model
+        Self
     }
 
-    fn change(&mut self, _: Self::Properties) -> bool {
+    fn change(&mut self, _props: Self::Properties) -> bool {
         false
     }
 
@@ -23,12 +22,11 @@ impl Component for Model {
 
     fn view(&self) -> Html {
         html! {
-            <Ansi text=OUTPUT.to_owned() />
+            <AnsiStatic text=OUTPUT />
         }
     }
 }
 
-#[wasm_bindgen(start)]
-pub fn start_app() {
+pub fn main() {
     yew::start_app::<Model>();
 }

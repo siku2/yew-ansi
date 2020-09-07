@@ -1,2 +1,2 @@
 [workspace]
-members = ["minimal"]
+members = ["custom_style_builder", "minimal"]

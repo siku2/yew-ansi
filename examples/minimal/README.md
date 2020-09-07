@@ -1,3 +1,3 @@
 # Minimal
 
-Renders the contents of [output.txt](src/output.txt).
+Tiny example which only renders the contents of [cargo-expand.txt](../../assets/cargo-expand.txt).

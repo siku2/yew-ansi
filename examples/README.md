@@ -2,21 +2,26 @@
 
 ## Dependencies
 
-Requires [cargo-make](https://github.com/sagiegurari/cargo-make) to run the examples.
+Requires [trunk](https://github.com/thedodd/trunk) to run the examples.
 Use the following command to install it:
 
 ```bash
-cargo install cargo-make
+cargo install trunk
 ```
 
 ## Running an example
 
-Use the following command to run an example.
-
 ```bash
-cargo make run <EXAMPLE>
+# move into the example directory
+cd <EXAMPLE>
+
+# run the example
+trunk serve
 ```
+
+Use `trunk help` for more details.
 
 ## List of examples
 
+- [custom_style_builder](custom_style_builder): How to use a custom `StyleBuilder`.
 - [minimal](minimal): Basic demonstration of the Ansi component.
