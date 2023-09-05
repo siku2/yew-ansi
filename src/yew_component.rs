@@ -84,16 +84,16 @@ where
     }
 
     fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
-        false
+        true
     }
 
-    fn changed(&mut self, _ctx: &Context<Self>, props: &Self::Properties) -> bool {
-        let update_segments = self.props.text != props.text;
+    fn changed(&mut self, ctx: &Context<Self>, _old: &Self::Properties) -> bool {
+        let update_segments = self.props.text != ctx.props().text;
 
-        let should_render = if &self.props == props {
+        let should_render = if &self.props == ctx.props() {
             false
         } else {
-            self.props = props.clone();
+            self.props = ctx.props().clone();
             true
         };
 
@@ -104,15 +104,14 @@ where
         should_render
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
-        let props = &self.props;
-        let style = if props.no_default_style {
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let style = if ctx.props().no_default_style {
             ""
         } else {
             CSS_ANSI_CONTAINER
         };
         html! {
-            <pre class={ props.class.clone() } style={ style }>
+            <pre class={ ctx.props().class.clone() } style={ style }>
                 { for self.segments.iter().map(Self::render_segment) }
             </pre>
         }
