@@ -1,12 +1,12 @@
 use crate::style::{ClassStyle, InlineStyle, StyleBuilder};
 use std::{borrow::Borrow, marker::PhantomData, rc::Rc};
-use yew::{html, Classes, Component, ComponentLink, Html, Properties, ShouldRender};
+use yew::{html, Classes, Component, Html, Properties, Context};
 
 const CSS_ANSI_CONTAINER: &str = "font-family:monospace;";
 
 /// Props that can be passed to the [`AnsiRenderer`] component.
 #[derive(Clone, Debug, PartialEq, Properties)]
-pub struct AnsiProps<S: Clone> {
+pub struct AnsiProps<S: Clone + PartialEq> {
     /// Classes to add to the root element. (Optional)
     #[prop_or_default]
     pub class: Classes,
@@ -32,7 +32,7 @@ pub struct AnsiProps<S: Clone> {
 #[derive(Debug)]
 pub struct AnsiRenderer<Text, Builder>
 where
-    Text: Clone,
+    Text: Clone + PartialEq,
     Builder: StyleBuilder,
 {
     props: AnsiProps<Text>,
@@ -41,7 +41,7 @@ where
 }
 impl<Text, Builder> AnsiRenderer<Text, Builder>
 where
-    Text: Borrow<str> + Clone,
+    Text: Borrow<str> + Clone + PartialEq,
     Builder: StyleBuilder,
 {
     fn update_segments(&mut self) {
@@ -59,7 +59,7 @@ where
         let class = class_style.class.clone();
         let style = class_style.style.clone().unwrap_or_default();
         html! {
-            <span class=class style=style>
+            <span class={ class } style={ style }>
                 { content }
             </span>
         }
@@ -73,9 +73,9 @@ where
     type Message = ();
     type Properties = AnsiProps<Text>;
 
-    fn create(props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self {
         let mut instance = Self {
-            props,
+            props: ctx.props().clone(),
             segments: Vec::new(),
             _builder: PhantomData::default(),
         };
@@ -83,17 +83,17 @@ where
         instance
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         false
     }
 
-    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+    fn changed(&mut self, _ctx: &Context<Self>, props: &Self::Properties) -> bool {
         let update_segments = self.props.text != props.text;
 
-        let should_render = if self.props == props {
+        let should_render = if &self.props == props {
             false
         } else {
-            self.props = props;
+            self.props = props.clone();
             true
         };
 
@@ -104,7 +104,7 @@ where
         should_render
     }
 
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         let props = &self.props;
         let style = if props.no_default_style {
             ""
@@ -112,7 +112,7 @@ where
             CSS_ANSI_CONTAINER
         };
         html! {
-            <pre class=props.class.clone() style=style>
+            <pre class={ props.class.clone() } style={ style }>
                 { for self.segments.iter().map(Self::render_segment) }
             </pre>
         }

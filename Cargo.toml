@@ -15,7 +15,7 @@ categories = ["parsing", "web-programming", "wasm"]
 default = ["yew"]
 
 [dependencies]
-yew = { version = "0.17", optional = true }
+yew = { version = "0.20", optional = true }
 
 [dev-dependencies]
 criterion = "0.3"
