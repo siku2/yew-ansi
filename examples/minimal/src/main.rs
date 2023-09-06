@@ -1,4 +1,4 @@
-use yew::{html, Component, ComponentLink, Html, ShouldRender};
+use yew::{html, Component, Context, Html};
 use yew_ansi::AnsiStatic;
 
 const OUTPUT: &str = include_str!("../../../assets/cargo-expand.txt");
@@ -8,25 +8,21 @@ impl Component for Model {
     type Message = ();
     type Properties = ();
 
-    fn create(_props: Self::Properties, _link: ComponentLink<Self>) -> Self {
+    fn create(_ctx: &Context<Self>) -> Self {
         Self
     }
 
-    fn change(&mut self, _props: Self::Properties) -> bool {
+    fn update(&mut self, _ctx: &Context<Self>, _msg: Self::Message) -> bool {
         false
     }
 
-    fn update(&mut self, _msg: Self::Message) -> ShouldRender {
-        false
-    }
-
-    fn view(&self) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
-            <AnsiStatic text=OUTPUT />
+            <AnsiStatic text={ OUTPUT } />
         }
     }
 }
 
 pub fn main() {
-    yew::start_app::<Model>();
+    yew::Renderer::<Model>::new().render();
 }

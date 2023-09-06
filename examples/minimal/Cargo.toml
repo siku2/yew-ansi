@@ -4,5 +4,5 @@ version = "0.1.0"
 edition = "2018"
 
 [dependencies]
-yew = "0.17"
+yew = { version = "0.20", features = ["csr"] }
 yew-ansi = { path = "../.." }
